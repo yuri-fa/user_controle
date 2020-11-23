@@ -1,9 +1,14 @@
 package com.yuri.spring.angular.mongo.ws.domain;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.yuri.spring.angular.mongo.ws.dto.UserDTO;
 
 @Document(collection="User")
 public class User implements Serializable{
@@ -15,6 +20,10 @@ public class User implements Serializable{
 	private String lastName;
 	private String email;
 	
+	@DBRef(lazy=true)
+	private List<Role> roles = new ArrayList<>();
+	
+	
 	public User() {
 		super();
 	}
@@ -24,6 +33,22 @@ public class User implements Serializable{
 		this.lastName = lastName;
 		this.email = email;
 	}
+	
+	public User(UserDTO userDTO) {
+		this.id = userDTO.getId();
+		this.firstName = userDTO.getFirstName();
+		this.lastName = userDTO.getLastName();
+		this.email = userDTO.getEmail();
+	}
+	
+	public User(String id, String firstName, String lastName, String email) {
+		super();
+		this.id = id;
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.email = email;
+	}
+	
 	public String getId() {
 		return id;
 	}
@@ -47,6 +72,13 @@ public class User implements Serializable{
 	}
 	public void setEmail(String email) {
 		this.email = email;
+	}
+	
+	public List<Role> getRoles() {
+		return roles;
+	}
+	public void setRoles(List<Role> roles) {
+		this.roles = roles;
 	}
 	@Override
 	public int hashCode() {
