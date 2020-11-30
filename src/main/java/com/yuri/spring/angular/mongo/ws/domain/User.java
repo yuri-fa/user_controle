@@ -19,6 +19,9 @@ public class User implements Serializable{
 	private String firstName;
 	private String lastName;
 	private String email;
+	private String password;
+	private Boolean enabled;
+	
 	
 	@DBRef(lazy=true)
 	private List<Role> roles = new ArrayList<>();
@@ -27,6 +30,18 @@ public class User implements Serializable{
 	public User() {
 		super();
 	}
+
+	public User(User user) {
+		super();
+		this.id  = user.getId();
+		this.firstName = user.getFirstName();
+		this.lastName = user.getLastName();
+		this.email = user.getEmail();
+		this.password = user.getPassword();
+		this.enabled = user.getEnabled();
+		this.roles = user.getRoles();
+	}
+	
 	public User(String firstName, String lastName, String email) {
 		super();
 		this.firstName = firstName;
@@ -39,14 +54,17 @@ public class User implements Serializable{
 		this.firstName = userDTO.getFirstName();
 		this.lastName = userDTO.getLastName();
 		this.email = userDTO.getEmail();
+		this.password = userDTO.getPassword();
 	}
 	
-	public User(String id, String firstName, String lastName, String email) {
+	public User(String id, String firstName, String lastName, String email,String password,Boolean enabled) {
 		super();
 		this.id = id;
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.email = email;
+		this.password = password;
+		this.enabled = enabled;
 	}
 	
 	public String getId() {
@@ -102,6 +120,18 @@ public class User implements Serializable{
 		} else if (!id.equals(other.id))
 			return false;
 		return true;
+	}
+	public String getPassword() {
+		return password;
+	}
+	public void setPassword(String password) {
+		this.password = password;
+	}
+	public Boolean getEnabled() {
+		return enabled;
+	}
+	public void setEnabled(Boolean enabled) {
+		this.enabled = enabled;
 	}
 	
 }

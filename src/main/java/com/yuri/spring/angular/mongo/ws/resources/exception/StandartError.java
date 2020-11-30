@@ -1,4 +1,4 @@
-package com.yuri.spring.angular.mongo.ws.repository.exception;
+package com.yuri.spring.angular.mongo.ws.resources.exception;
 
 import java.io.Serializable;
 

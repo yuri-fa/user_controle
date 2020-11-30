@@ -1,10 +1,17 @@
 package com.yuri.spring.angular.mongo.ws.resources;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
+import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.security.oauth2.provider.token.store.InMemoryTokenStore;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,6 +34,11 @@ public class UserResources {
 
 	@Autowired
 	private UserService userService;
+	
+	@Autowired
+	DefaultTokenServices defaultTokenService = new DefaultTokenServices();
+	
+	TokenStore tokenStore = new InMemoryTokenStore();
 	
 	@GetMapping("/users")
 	public ResponseEntity<List<UserDTO>> findAll(){
@@ -68,4 +80,23 @@ public class UserResources {
 		return ResponseEntity.ok().body(user.getRoles());
 	}
 	
+	@GetMapping("/users/main")
+	public ResponseEntity<UserDTO> getUserMain(Principal principal) {
+		User user = userService.findByEmail(principal.getName());
+		UserDTO userDto = new UserDTO(user);
+		userDto.setPassword("");
+		return ResponseEntity.ok().body(userDto);
+	}
+	
+	@GetMapping("/logout")
+	public ResponseEntity<Void> logout(HttpServletRequest request){
+		String authHeader = request.getHeader("Authrization");
+		if (authHeader != null) {
+			String tokenValeu = authHeader.replace("Bearer", "").trim();
+			OAuth2AccessToken oAuth = defaultTokenService.readAccessToken(tokenValeu);
+			tokenStore.removeAccessToken(oAuth);
+			defaultTokenService.revokeToken(String.valueOf(oAuth));
+		}
+		return ResponseEntity.noContent().build(); 
+	}
 }
