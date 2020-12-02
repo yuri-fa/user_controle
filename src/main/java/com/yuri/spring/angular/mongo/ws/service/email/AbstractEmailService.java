@@ -3,11 +3,13 @@ package com.yuri.spring.angular.mongo.ws.service.email;
 import java.util.Date;
 import java.util.UUID;
 
+import javax.annotation.PostConstruct;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.thymeleaf.TemplateEngine;
@@ -20,10 +22,20 @@ import com.yuri.spring.angular.mongo.ws.service.exception.ObjectNotFoundExceptio
 
 public abstract class AbstractEmailService implements EmailService {
 
-	@Value("$(default.sender)")
+//	@Value( value = "$(default.sender)")
 	private String sender;
-	@Value("$(default.url)")
+//	@Value(value = "$(default.url)")
 	private String url; 
+	
+	@PostConstruct
+	public void init() {
+		sender = env.getProperty("default.sender");
+		url = env.getProperty("default.url");
+		System.out.println(sender +" : "+ url);
+	}
+
+	@Autowired
+	private Environment env;
 	
 	@Autowired
 	TemplateEngine templateEngine;
