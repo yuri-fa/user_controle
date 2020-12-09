@@ -9,5 +9,5 @@ public interface EmailService {
 
 	void senderHtmlEmail(MimeMessage message);
 	
-	void senderConfirmationHtmlEmail(User user, VerificationToken token);
+	void senderConfirmationHtmlEmail(User user, VerificationToken token,Boolean resetandoSenha);
 }

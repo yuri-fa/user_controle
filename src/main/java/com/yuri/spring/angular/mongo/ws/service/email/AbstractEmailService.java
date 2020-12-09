@@ -8,7 +8,6 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -47,35 +46,44 @@ public abstract class AbstractEmailService implements EmailService {
 	UserService userService;
 
 	@Override
-	public void senderConfirmationHtmlEmail(User user, VerificationToken vToken) {
+	public void senderConfirmationHtmlEmail(User user, VerificationToken vToken,Boolean resetandoSenha) {
 		try {
-			MimeMessage mimeMessage = prapareMimeMessageFromUser(user, vToken);
+			MimeMessage mimeMessage = prapareMimeMessageFromUser(user, vToken,resetandoSenha);
 			senderHtmlEmail(mimeMessage);
 		}catch(MessagingException me) {
 			throw new ObjectNotFoundException("Erro ao tenta enviar o email");
 		}
 	}
 	
-	protected MimeMessage prapareMimeMessageFromUser(User user,VerificationToken vToken) throws MessagingException{
+	protected MimeMessage prapareMimeMessageFromUser(User user,VerificationToken vToken,Boolean resetandoSenha) throws MessagingException{
 		MimeMessage mimeMessage = javaMailSender.createMimeMessage();
 		MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage,true);
 		mimeMessageHelper.setTo(user.getEmail());
 		mimeMessageHelper.setFrom(this.sender);
 		System.out.println(this.sender);
-		mimeMessageHelper.setSubject("Email de confirmação");
+		if (resetandoSenha) {
+			mimeMessageHelper.setSubject("Reset de senha");
+		}else {
+			mimeMessageHelper.setSubject("Email de confirmação");
+		}
 		mimeMessageHelper.setSentDate(new Date(System.currentTimeMillis()));
-		mimeMessageHelper.setText(htmlFromTemplateUser(user,vToken),true);
+		mimeMessageHelper.setText(htmlFromTemplateUser(user,vToken,resetandoSenha),true);
 		return mimeMessage;
 	}
 	
-	protected String htmlFromTemplateUser(User user,VerificationToken vToken) {
+	protected String htmlFromTemplateUser(User user,VerificationToken vToken, Boolean resetandoSenha) {
 		String token = UUID.randomUUID().toString();
 		if (vToken == null) {
 			userService.createVerificationTokenForUser(user, token);
 		}else {
 			token = vToken.getToken();
 		}
-		String confirmationUrl = url+ "/api/public/registrationConfirm/users?token="+token;
+		String confirmationUrl = url;
+		if (resetandoSenha) {
+			confirmationUrl += "/api/public/resetPassord/users?id="+user.getId()+"&token="+token;
+		}else {
+			confirmationUrl += "/api/public/registrationConfirm/users?token="+token;
+		}
 		Context context = new Context();
 		context.setVariable("user", user);
 		context.setVariable("confirmationUrl", confirmationUrl);

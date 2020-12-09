@@ -9,6 +9,8 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.yuri.spring.angular.mongo.ws.domain.User;
 import com.yuri.spring.angular.mongo.ws.domain.VerificationToken;
@@ -74,7 +76,7 @@ public class UserService {
 		user.setRoles(Arrays.asList(roleRespository.findByName("ROLE_USER").get()));
 		user.setEnabled(false);
 		user = create(user);
-		emailService.senderConfirmationHtmlEmail(user, null);
+		emailService.senderConfirmationHtmlEmail(user, null,false);
 		return user;
 	}
 	
@@ -89,9 +91,9 @@ public class UserService {
 			return "invalidToken";
 		}
 		User user = tokenOpt.get().getUser();
-		Calendar calendar = Calendar.getInstance();
-		if (tokenOpt.get().getExpiryDate().getTime() -calendar.getTime().getTime() <= 0) {
-			return "expired";
+		String result = validadeTimeToken(tokenOpt.get());
+		if (result != null) {
+			return result;
 		}
 		user.setEnabled(true);
 		userRepository.save(user);
@@ -103,11 +105,44 @@ public class UserService {
 		return user.orElseThrow(() -> new ObjectNotFoundException(String.format("Usuário não encontrado")));
 	}
 	
-	public void generateNewVerificationToken(String email) {
+	public void generateNewVerificationToken(String email,Boolean resetandoSenha) {
 		User user = findByEmail(email);
 		Optional<VerificationToken> tokenOpt = verificationTokenRepository.findByUser(user);
-		tokenOpt.get().updateToken(UUID.randomUUID().toString());
-		VerificationToken updateToken = verificationTokenRepository.save(tokenOpt.get());
-		emailService.senderConfirmationHtmlEmail(user, updateToken);
+		VerificationToken newToken = null;
+		if (tokenOpt.isPresent()) {
+			newToken = tokenOpt.get();
+			newToken.updateToken(UUID.randomUUID().toString());
+		}else {
+			newToken = new VerificationToken(UUID.randomUUID().toString(), user);
+		}
+		VerificationToken updateToken = verificationTokenRepository.save(newToken);
+		emailService.senderConfirmationHtmlEmail(user, updateToken,resetandoSenha);
+	}
+
+	public String validadePasswordResetToken(String id, String token) {
+		Optional<VerificationToken> vToken = verificationTokenRepository.findByToken(token);
+		if (!vToken.isPresent() || !vToken.get().getId().equals(id)) {
+			return "invalidToken"; 
+		}
+		
+		return validadeTimeToken(vToken.get());
+	}
+	
+	
+	private String validadeTimeToken(VerificationToken vToken) {
+		Calendar calendar = Calendar.getInstance();
+		if (vToken.getExpiryDate().getTime() - calendar.getTime().getTime() <= 0) {
+			return "expired";
+		}
+		return null;
+	}
+
+	public VerificationToken getVerificationToken(String token) {
+		return verificationTokenRepository.findByToken(token).orElseThrow(() -> new ObjectNotFoundException("Token não encontrado"));
+	}
+
+	public void changePassword(User user, String password) {
+		user.setPassword(passwordEncoder.encode(password));
+		userRepository.save(user);
 	}
 }
